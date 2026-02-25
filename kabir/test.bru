@@ -1,0 +1,26 @@
+meta {
+  name: test
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://127.0.0.1:8000/historical-site/nearby?latitude=48.8584&longitude=2.2945&radius=10&limit=2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  latitude: 48.8584
+  longitude: 2.2945
+  radius: 10
+  limit: 2
+}
+
+headers {
+  Authorization: Bearer <PASTE_YOUR_FIREBASE_ID_TOKEN_HERE>
+}
+
+settings {
+  encodeUrl: false
+}
