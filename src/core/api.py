@@ -2,6 +2,7 @@ from fastapi import FastAPI, APIRouter, HTTPException, Request
 from ..database.firebase import firebase_config
 from src.modules.historical_site.controller import router as historical_site_router
 from src.modules.process_text.controller import router as process_text_router
+from src.modules.services.controller import router as services_router
 
 # Create the main router for this module
 router = APIRouter()
@@ -69,3 +70,4 @@ def register_routes(app: FastAPI):
     app.include_router(historical_site_router)
     app.include_router(process_text_router)
     app.include_router(fcm_router, prefix="/api")
+    app.include_router(services_router, prefix="/api")

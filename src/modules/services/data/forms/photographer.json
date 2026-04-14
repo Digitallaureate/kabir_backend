@@ -1,0 +1,174 @@
+{
+    "serviceId": "photographer",
+    "requiresManualReview": false,
+    "formFields": [
+        {
+            "key": "traveler_type",
+            "label": "Who is this booking for?",
+            "type": "toggle",
+            "required": true,
+            "defaultValue": "self",
+            "options": [
+                {
+                    "label": "Self",
+                    "value": "self"
+                },
+                {
+                    "label": "Other",
+                    "value": "other"
+                }
+            ],
+            "order": 1
+        },
+        {
+            "key": "full_name",
+            "label": "Full Name",
+            "type": "text",
+            "required": true,
+            "order": 2
+        },
+        {
+            "type": "row",
+            "layoutGroup": "contact_info",
+            "order": 3,
+            "children": [
+                {
+                    "key": "country_code",
+                    "label": "Country Code",
+                    "type": "select",
+                    "required": true,
+                    "order": 3,
+                    "placeholder": "+91"
+                },
+                {
+                    "key": "phone_number",
+                    "label": "Phone Number",
+                    "type": "phone",
+                    "required": true,
+                    "order": 4,
+                    "validation": {
+                        "pattern": "^[0-9]{10}$",
+                        "message": "Please enter a valid 10-digit phone number"
+                    }
+                }
+            ]
+        },
+        {
+            "key": "monument_id",
+            "label": "Select Monument",
+            "type": "select",
+            "required": true,
+            "placeholder": "Choose a monument",
+            "order": 4,
+            "dataSource": {
+                "mode": "dynamic",
+                "sourceKey": "historical_sites",
+                "labelField": "site_name",
+                "valueField": "id"
+            },
+            "options": []
+        },
+        {
+            "key": "travel_date",
+            "label": "Travel Date",
+            "type": "date",
+            "required": true,
+            "order": 5
+        },
+        {
+            "key": "time_slot",
+            "label": "Preferred Slot",
+            "type": "time_slot",
+            "required": true,
+            "order": 6
+        },
+        {
+            "key": "number_of_photos",
+            "label": "Number of Photos",
+            "type": "number",
+            "required": true,
+            "validation": {
+                "min": 5,
+                "max": 50
+            },
+            "order": 7
+        },
+        {
+            "key": "additional_requests",
+            "label": "Additional Requests",
+            "type": "textarea",
+            "required": false,
+            "order": 8
+        }
+    ],
+    "pricingConfig": {
+        "currency": "INR",
+        "pricingType": "package",
+        "basePrice": 0,
+        "rules": [
+            {
+                "label": "5 Photos",
+                "field": "number_of_photos",
+                "operator": "equals",
+                "value": 5,
+                "effect": {
+                    "type": "replace_price",
+                    "amount": 500
+                }
+            },
+            {
+                "label": "10 Photos",
+                "field": "number_of_photos",
+                "operator": "equals",
+                "value": 10,
+                "effect": {
+                    "type": "replace_price",
+                    "amount": 1000
+                }
+            },
+            {
+                "label": "20 Photos",
+                "field": "number_of_photos",
+                "operator": "equals",
+                "value": 20,
+                "effect": {
+                    "type": "replace_price",
+                    "amount": 1800
+                }
+            },
+            {
+                "label": "30 Photos",
+                "field": "number_of_photos",
+                "operator": "equals",
+                "value": 30,
+                "effect": {
+                    "type": "replace_price",
+                    "amount": 2500
+                }
+            },
+            {
+                "label": "50 Photos",
+                "field": "number_of_photos",
+                "operator": "equals",
+                "value": 50,
+                "effect": {
+                    "type": "replace_price",
+                    "amount": 4000
+                }
+            }
+        ],
+        "tax": {
+            "type": "percentage",
+            "value": 5
+        },
+        "convenienceFee": {
+            "type": "flat",
+            "value": 20
+        }
+    },
+    "uiConfig": {
+        "buttonText": "Book Photographer"
+    },
+    "createdAt": "2026-03-31T10:00:00Z",
+    "updatedAt": "2026-03-31T10:00:00Z"
+}

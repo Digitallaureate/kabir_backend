@@ -1,0 +1,182 @@
+{
+    "serviceId": "cab_auto",
+    "requiresManualReview": false,
+    "formFields": [
+        {
+            "key": "traveler_type",
+            "label": "Who is this booking for?",
+            "type": "toggle",
+            "required": true,
+            "defaultValue": "self",
+            "options": [
+                {
+                    "label": "Self",
+                    "value": "self"
+                },
+                {
+                    "label": "Other",
+                    "value": "other"
+                }
+            ],
+            "order": 1
+        },
+        {
+            "key": "full_name",
+            "label": "Full Name",
+            "type": "text",
+            "required": true,
+            "order": 2
+        },
+        {
+            "type": "row",
+            "layoutGroup": "contact_info",
+            "order": 3,
+            "children": [
+                {
+                    "key": "country_code",
+                    "label": "Country Code",
+                    "type": "select",
+                    "required": true,
+                    "order": 3,
+                    "placeholder": "+91"
+                },
+                {
+                    "key": "phone_number",
+                    "label": "Phone Number",
+                    "type": "phone",
+                    "required": true,
+                    "order": 4,
+                    "validation": {
+                        "pattern": "^[0-9]{10}$",
+                        "message": "Please enter a valid 10-digit phone number"
+                    }
+                }
+            ]
+        },
+        {
+            "key": "vehicle_type",
+            "label": "Vehicle Type",
+            "type": "select",
+            "required": true,
+            "options": [
+                "Auto",
+                "Sedan",
+                "SUV"
+            ],
+            "order": 5
+        },
+        {
+            "key": "booking_mode",
+            "label": "Booking Mode",
+            "type": "select",
+            "required": true,
+            "options": [
+                "Single Ride",
+                "Full Day",
+                "Multiple Days"
+            ],
+            "order": 6
+        },
+        {
+            "key": "start_date",
+            "label": "Start Date",
+            "type": "date",
+            "required": true,
+            "order": 7
+        },
+        {
+            "key": "end_date",
+            "label": "End Date",
+            "type": "date",
+            "required": false,
+            "visibility": {
+                "dependsOn": "booking_mode",
+                "operator": "equals",
+                "value": "Multiple Days"
+            },
+            "order": 8
+        },
+        {
+            "key": "pickup_location",
+            "label": "Pickup Location",
+            "type": "text",
+            "required": true,
+            "order": 9
+        },
+        {
+            "key": "drop_location",
+            "label": "Drop Location",
+            "type": "text",
+            "required": false,
+            "order": 10
+        },
+        {
+            "key": "number_of_travelers",
+            "label": "Number of Travelers",
+            "type": "number",
+            "required": true,
+            "validation": {
+                "min": 1,
+                "max": 20
+            },
+            "order": 11
+        },
+        {
+            "key": "additional_requests",
+            "label": "Additional Requests",
+            "type": "textarea",
+            "required": false,
+            "order": 12
+        }
+    ],
+    "pricingConfig": {
+        "currency": "INR",
+        "pricingType": "per_day",
+        "basePrice": 0,
+        "rules": [
+            {
+                "label": "Auto Daily Rate",
+                "field": "vehicle_type",
+                "operator": "equals",
+                "value": "Auto",
+                "effect": {
+                    "type": "replace_price",
+                    "amount": 800
+                }
+            },
+            {
+                "label": "Sedan Daily Rate",
+                "field": "vehicle_type",
+                "operator": "equals",
+                "value": "Sedan",
+                "effect": {
+                    "type": "replace_price",
+                    "amount": 1500
+                }
+            },
+            {
+                "label": "SUV Daily Rate",
+                "field": "vehicle_type",
+                "operator": "equals",
+                "value": "SUV",
+                "effect": {
+                    "type": "replace_price",
+                    "amount": 2500
+                }
+            }
+        ],
+        "tax": {
+            "type": "percentage",
+            "value": 5
+        },
+        "convenienceFee": {
+            "type": "flat",
+            "value": 20
+        }
+    },
+    "uiConfig": {
+        "buttonText": "Book Ride"
+    },
+    "createdAt": "2026-03-31T10:00:00Z",
+    "updatedAt": "2026-03-31T10:00:00Z"
+}
