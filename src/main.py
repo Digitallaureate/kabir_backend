@@ -1,10 +1,7 @@
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from .config.settings import settings
 import logging
-
-# Load environment variables from .env file
-load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -12,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="EcoStory Backend API",
+        title=settings.PROJECT_NAME,
         description="Backend API for EcoStory application",
-        version="1.0.0"
+        version=settings.VERSION
     )
     
     # CORS middleware

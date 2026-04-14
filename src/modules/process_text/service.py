@@ -10,6 +10,7 @@ from .model import (
     PineconeSearchResult,
     FirestoreMessage,
 )
+from ...config.settings import settings
 import openai
 import os
 import time
@@ -34,7 +35,7 @@ class ProcessTextService:
         """Get reusable OpenAI client"""
         if cls._openai_client is None:
             cls._openai_client = openai.AsyncOpenAI(
-                api_key=os.getenv("OPENAI_API_KEY")
+                api_key=settings.OPENAI_API_KEY
             )
         return cls._openai_client
 
@@ -43,7 +44,7 @@ class ProcessTextService:
         """Get reusable Pinecone index"""
         key = f"{index_name}_{host}"
         if key not in cls._pinecone_clients:
-            pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+            pc = Pinecone(api_key=settings.PINECONE_API_KEY)
             cls._pinecone_clients[key] = pc.Index(name=index_name, host=host)
         return cls._pinecone_clients[key]
 
@@ -52,13 +53,13 @@ class ProcessTextService:
         """Cache environment variables"""
         if cls._env_vars is None:
             cls._env_vars = {
-                "PINECONE_API_KEY": os.getenv("PINECONE_API_KEY"),
-                "PINECONE_INDEX_NAME": os.getenv("PINECONE_INDEX_NAME"),
-                "PINECONE_INDEX_HOST": os.getenv("PINECONE_INDEX_HOST"),
-                "PINECONE_INDEX_NAME2": os.getenv("PINECONE_INDEX_NAME2"),
-                "PINECONE_INDEX_HOST2": os.getenv("PINECONE_INDEX_HOST2"),
-                "PINECONE_INDEX_NAME3": os.getenv("PINECONE_INDEX_NAME3"),
-                "PINECONE_INDEX_HOST3": os.getenv("PINECONE_INDEX_HOST3"),
+                "PINECONE_API_KEY": settings.PINECONE_API_KEY,
+                "PINECONE_INDEX_NAME": settings.PINECONE_INDEX_NAME,
+                "PINECONE_INDEX_HOST": settings.PINECONE_INDEX_HOST,
+                "PINECONE_INDEX_NAME2": settings.PINECONE_INDEX_NAME2,
+                "PINECONE_INDEX_HOST2": settings.PINECONE_INDEX_HOST2,
+                "PINECONE_INDEX_NAME3": settings.PINECONE_INDEX_NAME3,
+                "PINECONE_INDEX_HOST3": settings.PINECONE_INDEX_HOST3,
             }
         return cls._env_vars
 
