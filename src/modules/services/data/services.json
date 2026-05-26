@@ -63,7 +63,7 @@
             "serviceName": "Local Sightseeing",
             "serviceType": "experience_service",
             "version": 1,
-            "isActive": true,
+            "isActive": false,
             "serviceTitle": "Explore Local Attractions",
             "serviceDescription": "Discover the hidden gems of Agra with our local sightseeing tours",
             "serviceImage": "https://firebasestorage.googleapis.com/v0/b/ecostory-b31b6.firebasestorage.app/o/shoppingCenter%2FLocal%20souvenir%20icon.png?alt=media&token=c994ac74-19cd-4626-bfd7-cc01d5a2e73c",

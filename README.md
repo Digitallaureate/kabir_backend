@@ -1,125 +1,110 @@
-# EcoStory Backend API
+# 🏰 EcoStory Backend API
 
-A robust FastAPI backend for the EcoStory platform, featuring Firebase Authentication, Pinecone vector search, and OpenAI-powered intent detection for historical exploration.
+A professional, modular FastAPI backend designed for the EcoStory platform. This project follows **Senior Architect** best practices, featuring type-safe configuration, secure secret management, and a highly scalable service module system.
 
-## 🚀 Features
+---
+
+## 🚀 Key Architectural Features
 
 - **Standardized API Interface**: Unified `msg` / `metadata` structure with `request_id` for every response.
-- **Global Firebase Security**: Default protection for all endpoints with intelligent public path whitelisting.
-- **Development Bypass**: Secure local debugging mode to skip token verification while maintaining project-id safety.
-- **Micro-service Modules**: Modular design for Historical Sites, FCM Notifications, and Text Processing.
-- **Searchable Knowledge**: Vector search integration using Pinecone for intelligent data retrieval.
+- **Type-Safe Configuration**: Centralized settings management using **Pydantic Settings**.
+- **Professional Secret Management**: Zero-secret code and scripts using **Google Cloud Secret Manager**.
+- **Modular Design**: Completely decoupled modules for Services, Historical Sites, FCM, and Text Processing.
+- **Dynamic Service Engine**: File-based dynamic form and service listing configuration for easy updates.
+
+---
 
 ## 🛠 Technology Stack
 
-- **Framework**: FastAPI (Python)
+- **Framework**: FastAPI (Python 3.13+)
 - **Database**: Google Cloud Firestore & Pinecone (Vector Search)
-- **Authentication**: Firebase Admin SDK
+- **Security**: Firebase Admin SDK & Google Secret Manager
 - **AI/LLM**: OpenAI GPT Models
-- **Deployment**: Google Cloud Run (Containerized with Docker)
+- **Infrastucture**: Google Cloud Run (Containerized)
 
-## 📋 Prerequisites
+---
 
-- Python 3.9+
-- Google Cloud Platform Account
-- Firebase Project
-- Pinecone API Key
-- OpenAI API Key
+## 📋 Local Development Setup
 
-## ⚙️ Installation & Setup
+### 1. Prerequisites
+- Python 3.13+
+- [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (Logged in with `gcloud auth login`)
+- A Firebase Service Account JSON file.
 
-1. **Clone the repository**:
-   ```powershell
-   git clone <repository-url>
-   cd ecostory_backend
-   ```
+### 2. Installation
+```powershell
+# Create and activate virtual environment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 
-2. **Create a Virtual Environment**:
-   ```powershell
-   python -m venv .venv
-   .venv\Scripts\activate
-   ```
-
-3. **Install Dependencies**:
-   ```powershell
-   pip install -r requirements.txt
-   ```
-
-4. **Firebase Configuration**:
-   Place your Firebase service account JSON file in the root directory and name it `firebase-service-account.json`.
-
-5. **Environment Variables**:
-   Create a `.env` file in the root directory:
-   ```env
-   FIREBASE_SERVICE_ACCOUNT_PATH=firebase-service-account.json
-   OPENAI_API_KEY=your_openai_key
-   PINECONE_API_KEY=your_pinecone_key
-   PINECONE_ENV=your_pinecone_region
-   KABIR_INDEX_NAME=your_index_name
-   
-   # Development Only
-   DEBUG_SKIP_VERIFY=true
-   ```
-
-## 🔐 Authentication & Security
-
-### Global Middleware
-The backend uses `FirebaseAuthMiddleware` to protect all routes. 
-- **Production**: Strictly verifies Firebase ID Tokens using Google's public keys.
-- **Development**: If `DEBUG_SKIP_VERIFY=true` is set, the backend skips signature checks but still validates that the token belongs to the correct Firebase project.
-
-### Response Structure
-All responses follow this unified JSON format:
-```json
-{
-  "msg": { "data": "here" },
-  "metadata": {
-    "request_id": "uuid-generated-per-call",
-    "success": true
-  }
-}
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-## 🛠 Running Locally
+### 3. Local Configuration
+Create a `.env` file in the root directory:
+```env
+DEBUG=true
+DEBUG_SKIP_VERIFY=true  # Allows browser/Postman testing without heavy auth headers
+GOOGLE_CLOUD_PROJECT=ecostory-b31b6
+FIREBASE_SERVICE_ACCOUNT_PATH=firebase-service-account.json
 
+# Local API Keys (for local testing only)
+OPENAI_API_KEY=sk-xxxx...
+PINECONE_API_KEY=pcsk_xxxx...
+...
+```
+
+### 4. Running Locally
 ```powershell
 uvicorn src.main:app --reload
 ```
-The API will be available at `http://127.0.0.1:8000`.
-Documentation is available at `http://127.0.0.1:8000/docs`.
+- **API URL**: `http://127.0.0.1:8000/api`
+- **Docs (Swagger)**: `http://127.0.0.1:8000/docs`
 
-## ☁️ Deployment (Google Cloud Run)
+---
 
-To deploy to Google Cloud Run, use the following template:
+## ☁️ Production Deployment
 
-gcloud run deploy ecostory-backend --source . --platform managed --region us-central1 --allow-unauthenticated --port 8080 --memory 1Gi --cpu 1 --min-instances 1 --max-instances 10 --set-env-vars="GOOGLE_CLOUD_PROJECT=ecostory-b31b6"
+### 🏛️ The "Architect" Pattern
+This project uses **Google Cloud Secret Manager**. All sensitive keys are stored in the cloud, NOT in the code or deployment scripts.
 
+### 🚀 Deploying to Cloud Run
+To deploy the latest code to production, simply run the deployment script:
 ```powershell
-gcloud run deploy ecostory-backend `
-  --source . `
-  --platform managed `
-  --region us-central1 `
-  --allow-unauthenticated `
-  --port 8080 `
-  --set-env-vars="FIREBASE_SERVICE_ACCOUNT_PATH=firebase-service-account.json,OPENAI_API_KEY=...,PINECONE_API_KEY=..."
+.\deploy.bat
 ```
+*Note: This script automatically handles project mapping, memory allocation, and secret injection.*
+
+---
+
+## 🧩 Adding New Services & Forms
+The `services` module is dynamic. You can add new content without changing a single line of Python code.
+
+1.  **Add to Service List**: Modify [src/modules/services/data/services.json](file:///c:/python_project/ecostory_backend/src/modules/services/data/services.json).
+2.  **Add a Form**: Create a new JSON file in [src/modules/services/data/forms/](file:///c:/python_project/ecostory_backend/src/modules/services/data/forms/) (e.g., `new_service.json`).
+3.  **Deploy**: Run `.\deploy.bat`.
+
+---
 
 ## 📂 Project Structure
 
 ```text
 src/
-├── core/             # Core infrastructure (middleware, schemas, error handlers)
-├── database/         # Database connectors (Firestore, Pinecone)
-├── modules/          # Business logic modules
+├── config/           # Type-safe Pydantic Settings
+├── core/             # Infrastructure (Auth Middleware, API Registry)
+├── database/         # Firebase & Firestore Connectors
+├── modules/          # Business Logic
+│   ├── services/     # Dynamic Services & Form Engine [NEW]
 │   ├── historical_site/
 │   ├── fcm/
 │   └── process_text/
-└── main.py           # Application entry point
+└── main.py           # Entry Point & App Lifecycle
 ```
 
-to check in which project it is deployed
+---
 
-(.venv) PS C:\python_project\ecostory_backend> gcloud config get-value project
-[EMAIL_ADDRESS]
-
-(.venv) PS C:\python_project\ecostory_backend> 
+## 🔐 Security Notes
+- **Production Auth**: Strictly verifies Firebase ID tokens.
+- **Local Auth**: If `DEBUG_SKIP_VERIFY` is enabled, any string in the Bearer token works, but the backend still ensures the token is for the correct project.
+- **Git Safety**: `.env` and `deploy.bat` (if it contains secrets) are excluded via `.gitignore`.

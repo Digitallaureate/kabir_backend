@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Query
 from fastapi.responses import JSONResponse
 from .service import services_service
 from ...core.schemas import success_response, error_response
@@ -12,10 +12,14 @@ router = APIRouter(
 )
 
 @router.get("")
-async def list_services(request: Request):
-    """Get the listing of all available services"""
+async def list_services(
+    request: Request, 
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page")
+):
+    """Get the listing of all available services with pagination"""
     try:
-        data = services_service.get_services()
+        data = services_service.get_services(page=page, limit=limit)
         return success_response(
             request=request, 
             data=data, 

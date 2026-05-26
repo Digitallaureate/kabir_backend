@@ -12,12 +12,22 @@ class ServicesService:
         self.services_file = self.base_path / "services.json"
         self.forms_dir = self.base_path / "forms"
 
-    def get_services(self) -> Dict[str, Any]:
-        """Load, filter, and sort the list of services"""
+    def get_services(self, page: int = 1, limit: int = 10) -> Dict[str, Any]:
+        """Load, filter, and sort the list of services with full pagination metadata"""
         try:
             if not self.services_file.exists():
                 logger.error(f"Services file not found: {self.services_file}")
-                return {"services": []}
+                return {
+                    "data": [], 
+                    "meta": {
+                        "total": 0,
+                        "page": page,
+                        "limit": limit,
+                        "total_pages": 0,
+                        "has_next": False,
+                        "has_prev": False
+                    }
+                }
             
             with open(self.services_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -30,10 +40,26 @@ class ServicesService:
             # Sort: Order by ranking (ascending)
             sorted_services = sorted(active_services, key=lambda x: x.get("ranking", 999))
             
-            return {"services": sorted_services}
+            # Pagination Math
+            total = len(sorted_services)
+            total_pages = (total + limit - 1) // limit if limit > 0 else 0
+            start = (page - 1) * limit
+            end = start + limit
+            
+            return {
+                "data": sorted_services[start:end],
+                "meta": {
+                    "total": total,
+                    "page": page,
+                    "limit": limit,
+                    "total_pages": total_pages,
+                    "has_next": page < total_pages,
+                    "has_prev": page > 1
+                }
+            }
         except Exception as e:
             logger.error(f"Error loading/processing services: {e}")
-            return {"services": []}
+            return {"data": [], "meta": {"total": 0, "error": str(e)}}
 
     def get_service_form(self, service_id: str) -> Optional[Dict[str, Any]]:
         """Load and return a specific service form based on service_id"""

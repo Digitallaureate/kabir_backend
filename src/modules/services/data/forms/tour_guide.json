@@ -36,15 +36,15 @@
                     "key": "country_code",
                     "label": "Country Code",
                     "type": "select",
-                    "required": true,
+                    "required": false,
                     "order": 3,
-                    "placeholder": "+91"
+                    " lder": "+91"
                 },
                 {
                     "key": "phone_number",
                     "label": "Phone Number",
                     "type": "phone",
-                    "required": true,
+                    "required": false,
                     "order": 4,
                     "validation": {
                         "pattern": "^[0-9]{10}$",
@@ -59,7 +59,7 @@
             "type": "select",
             "required": true,
             "placeholder": "Choose a monument",
-            "order": 4,
+            "order": 5,
             "dataSource": {
                 "mode": "dynamic",
                 "sourceKey": "historical_sites",
@@ -69,18 +69,25 @@
             "options": []
         },
         {
-            "key": "travel_date",
-            "label": "Travel Date",
-            "type": "date",
-            "required": true,
-            "order": 5
-        },
-        {
-            "key": "time_slot",
-            "label": "Preferred Slot",
-            "type": "time_slot",
-            "required": true,
-            "order": 6
+            "type": "row",
+            "layoutGroup": "travel_schedule",
+            "order": 6,
+            "children": [
+                {
+                    "key": "travel_date",
+                    "label": "Travel Date",
+                    "type": "date",
+                    "required": true,
+                    "order": 6
+                },
+                {
+                    "key": "time_slot",
+                    "label": "Time Slot",
+                    "type": "time_slot",
+                    "required": true,
+                    "order": 7
+                }
+            ]
         },
         {
             "key": "language_preference",
@@ -95,7 +102,7 @@
                 "valueField": "title"
             },
             "options": [],
-            "order": 7
+            "order": 8
         },
         {
             "key": "number_of_travelers",
@@ -106,7 +113,7 @@
                 "min": 1,
                 "max": 20
             },
-            "order": 8
+            "order": 9
         },
         {
             "key": "gender_preference",
@@ -119,14 +126,14 @@
                 "Female",
                 "No Preference"
             ],
-            "order": 9
+            "order": 10
         },
         {
             "key": "additional_requests",
             "label": "Additional Requests",
             "type": "textarea",
             "required": false,
-            "order": 10
+            "order": 11
         }
     ],
     "pricingConfig": {
@@ -167,7 +174,10 @@
     },
     "uiConfig": {
         "buttonText": "Book Guide",
-        "badge": "Popular"
+        "badge": "Popular",
+        "showCoupon": true,
+        "showGst": true,
+        "showBillingSummary": true
     },
     "createdAt": "2026-03-31T10:00:00Z",
     "updatedAt": "2026-03-31T10:00:00Z"
