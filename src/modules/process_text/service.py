@@ -16,6 +16,7 @@ import os
 import time
 import json
 import asyncio
+import unicodedata
 from datetime import datetime
 from pinecone import Pinecone
 from firebase_admin import firestore  # for Query.DESCENDING
@@ -34,8 +35,9 @@ class ProcessTextService:
     def get_openai_client(cls):
         """Get reusable OpenAI client"""
         if cls._openai_client is None:
+            api_key = cls._clean_text(settings.OPENAI_API_KEY)
             cls._openai_client = openai.AsyncOpenAI(
-                api_key=settings.OPENAI_API_KEY
+                api_key=api_key
             )
         return cls._openai_client
 
@@ -44,24 +46,57 @@ class ProcessTextService:
         """Get reusable Pinecone index"""
         key = f"{index_name}_{host}"
         if key not in cls._pinecone_clients:
-            pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+            # pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+            pc = Pinecone(api_key=cls._clean_text(settings.PINECONE_API_KEY))
             cls._pinecone_clients[key] = pc.Index(name=index_name, host=host)
         return cls._pinecone_clients[key]
 
     @classmethod
     def get_env_vars(cls):
-        """Cache environment variables"""
+        """Cache cleaned environment variables"""
         if cls._env_vars is None:
             cls._env_vars = {
-                "PINECONE_API_KEY": settings.PINECONE_API_KEY,
-                "PINECONE_INDEX_NAME": settings.PINECONE_INDEX_NAME,
-                "PINECONE_INDEX_HOST": settings.PINECONE_INDEX_HOST,
-                "PINECONE_INDEX_NAME2": settings.PINECONE_INDEX_NAME2,
-                "PINECONE_INDEX_HOST2": settings.PINECONE_INDEX_HOST2,
-                "PINECONE_INDEX_NAME3": settings.PINECONE_INDEX_NAME3,
-                "PINECONE_INDEX_HOST3": settings.PINECONE_INDEX_HOST3,
-            }
+            "PINECONE_API_KEY": cls._clean_text(settings.PINECONE_API_KEY),
+            "PINECONE_INDEX_NAME": cls._clean_text(settings.PINECONE_INDEX_NAME),
+            "PINECONE_INDEX_HOST": cls._clean_text(settings.PINECONE_INDEX_HOST),
+            "PINECONE_INDEX_NAME2": cls._clean_text(settings.PINECONE_INDEX_NAME2),
+            "PINECONE_INDEX_HOST2": cls._clean_text(settings.PINECONE_INDEX_HOST2),
+            "PINECONE_INDEX_NAME3": cls._clean_text(settings.PINECONE_INDEX_NAME3),
+            "PINECONE_INDEX_HOST3": cls._clean_text(settings.PINECONE_INDEX_HOST3),
+        }
         return cls._env_vars
+
+    @staticmethod
+    def _clean_text(value: Optional[str]) -> str:
+        """Remove hidden BOM/format chars that can break request encoding."""
+        if not value:
+            return ""
+        text = str(value).replace("\ufeff", "")
+        text = "".join(
+            ch for ch in text if unicodedata.category(ch) != "Cf"
+        )
+        return text.strip()
+
+    @staticmethod
+    def _ascii_safe_text(value: Optional[str]) -> str:
+        """Fallback sanitizer for clients that choke on non-ASCII payload text."""
+        return ProcessTextService._clean_text(value).encode(
+            "ascii", errors="ignore"
+        ).decode("ascii").strip()
+
+    @staticmethod
+    def _clean_structure(value: Any) -> Any:
+        """Recursively clean strings nested inside dict/list metadata."""
+        if isinstance(value, str):
+            return ProcessTextService._clean_text(value)
+        if isinstance(value, list):
+            return [ProcessTextService._clean_structure(item) for item in value]
+        if isinstance(value, dict):
+            return {
+                ProcessTextService._clean_text(str(key)): ProcessTextService._clean_structure(val)
+                for key, val in value.items()
+            }
+        return value
 
     # ---------- UTIL: CHAT HISTORY ----------
 
@@ -91,7 +126,9 @@ class ProcessTextService:
                 history.append(
                     {
                         "role": data.get("role", "user"),
-                        "content": data.get("content", ""),
+                        "content": ProcessTextService._clean_text(
+                            data.get("content", "")
+                        ),
                     }
                 )
             # Firestore returns newest first (DESCENDING), so reverse to oldest→newest
@@ -108,8 +145,9 @@ class ProcessTextService:
         overall_start = time.time()
 
         try:
+            cleaned_request_content = ProcessTextService._clean_text(request.content)
             print(
-                f"🚀 Starting process_user_content for: {request.content[:50]}..."
+                f"🚀 Starting process_user_content for: {cleaned_request_content[:50]}..."
             )
 
             # 🚀 PARALLEL EXECUTION: Intent detection (router) + Chat verification
@@ -217,6 +255,7 @@ class ProcessTextService:
 
             openai_start = time.time()
             client = ProcessTextService.get_openai_client()
+            cleaned_request_content = ProcessTextService._clean_text(request.content)
 
             # 1) Fetch last 9 messages from this chat for context
             history_messages = await ProcessTextService._get_last_messages(
@@ -226,7 +265,7 @@ class ProcessTextService:
                 f"🧠 Loaded {len(history_messages)} history messages for router"
             )
 
-            router_system_prompt = """
+            router_system_prompt = ProcessTextService._clean_text("""
 You are a router for Kabir, the AI travel companion.
 
 Using the last 10 conversation messages, identify:
@@ -254,7 +293,7 @@ Return ONLY this JSON:
   "intent": "<image | video | none>",
   "semantic_query": "<search text>"
 }
-""".strip()
+""".strip())
 
             # Build messages array as a real conversation
             messages: List[Dict[str, str]] = [
@@ -266,19 +305,38 @@ Return ONLY this JSON:
                 role = msg.get("role", "user")
                 if role not in ("user", "assistant"):
                     role = "user"
-                content = (msg.get("content") or "").strip()
+                content = ProcessTextService._clean_text(msg.get("content"))
                 if content:
                     messages.append({"role": role, "content": content})
 
             # Add current user message as last
-            messages.append({"role": "user", "content": request.content})
+            messages.append({"role": "user", "content": cleaned_request_content})
 
-            response = await client.chat.completions.create(
-                model="gpt-4.1-mini",
-                messages=messages,
-                max_tokens=200,
-                temperature=0.1,
-            )
+            try:
+                response = await client.chat.completions.create(
+                    model="gpt-4.1-mini",
+                    messages=messages,
+                    max_tokens=200,
+                    temperature=0.1,
+                )
+            except Exception as openai_error:
+                if "ascii" not in str(openai_error).lower():
+                    raise
+
+                print("⚠️ Router call hit encoding issue, retrying with ASCII-safe payload...")
+                ascii_messages = [
+                    {
+                        "role": ProcessTextService._ascii_safe_text(msg.get("role", "user")) or "user",
+                        "content": ProcessTextService._ascii_safe_text(msg.get("content", "")),
+                    }
+                    for msg in messages
+                ]
+                response = await client.chat.completions.create(
+                    model="gpt-4.1-mini",
+                    messages=ascii_messages,
+                    max_tokens=200,
+                    temperature=0.1,
+                )
 
             openai_time = int((time.time() - openai_start) * 1000)
             print(f"⏱️ OpenAI router call took: {openai_time}ms")
@@ -295,11 +353,14 @@ Return ONLY this JSON:
                 router_obj = {}
 
             router_intent_str = (router_obj.get("intent") or "none").strip().lower()
-            semantic_query = (router_obj.get("semantic_query") or "").strip()
+            # semantic_query = (router_obj.get("semantic_query") or "").strip()
+            semantic_query = ProcessTextService._clean_text(
+            router_obj.get("semantic_query") or ""
+            )
 
             # Fallback semantic_query if router returned empty
             if not semantic_query:
-                semantic_query = request.content.strip()
+                semantic_query = cleaned_request_content
 
             # Map router intent → internal IntentType
             if router_intent_str == "image":
@@ -333,7 +394,7 @@ Return ONLY this JSON:
                 confidence=0.0,
                 reasoning=f"Error in router/intent detection, defaulted to none: {str(e)}",
                 processing_time_ms=processing_time,
-                semantic_query=request.content.strip(),
+                semantic_query=ProcessTextService._clean_text(request.content),
             )
 
     # ---------- ROUTING ----------
@@ -346,7 +407,9 @@ Return ONLY this JSON:
         """Route to appropriate function based on detected intent + semantic_query."""
         try:
             intent = intent_result.detected_intent
-            semantic_query = (intent_result.semantic_query or request.content).strip()
+            semantic_query = ProcessTextService._clean_text(
+                intent_result.semantic_query or request.content
+            )
 
             print(
                 f"🎯 Routing to {intent.value} with semantic_query='{semantic_query[:80]}'..."
@@ -419,6 +482,7 @@ Return ONLY this JSON:
         function_start = time.time()
 
         try:
+            semantic_query = ProcessTextService._clean_text(semantic_query)
             print(f"🖼️ Starting optimized image search...")
             print(f"🔎 Semantic query for image: '{semantic_query}'")
 
@@ -495,10 +559,18 @@ Return ONLY this JSON:
             # Process result and save to Firestore
             top_match = matches[0]
             score = top_match["score"]
-            metadata = top_match["metadata"]
+            metadata = ProcessTextService._clean_structure(top_match["metadata"])
+            print(
+                "🧪 Image metadata sample: "
+                f"imageDesc={repr(metadata.get('imageDesc', ''))[:200]}, "
+                f"text={repr(metadata.get('text', ''))[:200]}, "
+                f"imageURL={repr(metadata.get('imageURL', ''))[:200]}"
+            )
 
-            original_description = metadata.get("imageDesc", "No description found.")
-            long_text = metadata.get("text", "")
+            original_description = ProcessTextService._clean_text(
+                metadata.get("imageDesc", "No description found.")
+            )
+            long_text = ProcessTextService._clean_text(metadata.get("text", ""))
 
             # 🧵 recent chat history for contextual caption
             recent_history = await ProcessTextService._get_last_messages(
@@ -521,7 +593,15 @@ Return ONLY this JSON:
                     "\n\nThis is the closest image I could find—feel free to upload a more relevant one!"
                 )
 
-            image_url = metadata.get("imageURL", "No image URL found.")
+            image_url = ProcessTextService._clean_text(
+                metadata.get("imageURL", "No image URL found.")
+            )
+            print(
+                "🧪 Image response fields: "
+                f"formatted_description={repr(formatted_description)[:200]}, "
+                f"image_url={repr(image_url)[:200]}, "
+                f"content={repr(content)[:200]}"
+            )
 
             firestore_message = await ProcessTextService._save_message_to_firestore(
                 request, content, image_url=image_url, user_id="ImageG"
@@ -543,6 +623,10 @@ Return ONLY this JSON:
         except Exception as e:
             total_time = int((time.time() - function_start) * 1000)
             print(f"❌ Error in optimized image search after {total_time}ms: {str(e)}")
+            print(
+                "🧪 Image search exception context: "
+                f"semantic_query={repr(semantic_query)[:200]}"
+            )
 
             content = f"Error during image search: {str(e)}"
             firestore_message = await ProcessTextService._save_message_to_firestore(
@@ -639,10 +723,12 @@ Return ONLY this JSON:
 
             top_match = matches[0]
             score = top_match["score"]
-            metadata = top_match["metadata"]
+            metadata = ProcessTextService._clean_structure(top_match["metadata"])
 
-            original_description = metadata.get("audioDesc", "No description found.")
-            long_text = metadata.get("text", "")
+            original_description = ProcessTextService._clean_text(
+                metadata.get("audioDesc", "No description found.")
+            )
+            long_text = ProcessTextService._clean_text(metadata.get("text", ""))
 
             # 🧵 recent chat history for contextual caption
             recent_history = await ProcessTextService._get_last_messages(
@@ -665,7 +751,9 @@ Return ONLY this JSON:
                     "\n\nThis is the closest audio I could find—feel free to upload a more relevant one!"
                 )
 
-            audio_url = metadata.get("audioURL", "No audio URL found.")
+            audio_url = ProcessTextService._clean_text(
+                metadata.get("audioURL", "No audio URL found.")
+            )
 
             firestore_message = await ProcessTextService._save_message_to_firestore(
                 request, content, image_url=audio_url, user_id="AudioG"
@@ -783,10 +871,12 @@ Return ONLY this JSON:
 
             top_match = matches[0]
             score = top_match["score"]
-            metadata = top_match["metadata"]
+            metadata = ProcessTextService._clean_structure(top_match["metadata"])
 
-            original_description = metadata.get("videoDesc", "No description found.")
-            long_text = metadata.get("text", "")
+            original_description = ProcessTextService._clean_text(
+                metadata.get("videoDesc", "No description found.")
+            )
+            long_text = ProcessTextService._clean_text(metadata.get("text", ""))
 
             # 🧵 recent chat history for contextual caption
             recent_history = await ProcessTextService._get_last_messages(
@@ -809,7 +899,9 @@ Return ONLY this JSON:
                     "\n\nThis is the closest video I could find—feel free to upload a more relevant one!"
                 )
 
-            video_url = metadata.get("videoURL", "No video URL found.")
+            video_url = ProcessTextService._clean_text(
+                metadata.get("videoURL", "No video URL found.")
+            )
 
             firestore_message = await ProcessTextService._save_message_to_firestore(
                 request, content, image_url=video_url, user_id="VideoG"
@@ -869,22 +961,24 @@ Return ONLY this JSON:
         history_snippets: List[str] = []
         for msg in chat_history or []:
             role = msg.get("role", "user")
-            content = (msg.get("content") or "").strip()
+            content = ProcessTextService._clean_text(msg.get("content"))
             if content:
-                history_snippets.append(f"{role}: {content[:220]}")
+                history_snippets.append(
+                    f"{ProcessTextService._clean_text(role)}: {content[:220]}"
+                )
 
         recent_chat_str = "\n".join(history_snippets[-8:])  # last few lines only
 
         # 2) Build payload for the model
         payload = {
-            "media_type": media_type,
-            "user_query": request.content,    # last user message
-            "original_label": original_label,
-            "long_text": long_text,
-            "recent_chat": recent_chat_str,
+            "media_type": ProcessTextService._clean_text(media_type),
+            "user_query": ProcessTextService._clean_text(request.content),
+            "original_label": ProcessTextService._clean_text(original_label),
+            "long_text": ProcessTextService._clean_text(long_text),
+            "recent_chat": ProcessTextService._clean_text(recent_chat_str),
         }
 
-        system_prompt = """
+        system_prompt = ProcessTextService._clean_text("""
 You are Kabir's media caption writer.
 
 You receive:
@@ -912,7 +1006,7 @@ Return ONLY valid JSON in this exact shape:
 {
   "description": "<final text to show user>"
 }
-""".strip()
+""".strip())
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -923,12 +1017,38 @@ Return ONLY valid JSON in this exact shape:
         ]
 
         try:
-            response = await client.chat.completions.create(
-                model="gpt-4.1-mini",
-                messages=messages,
-                max_tokens=200,
-                temperature=0.3,
-            )
+            try:
+                response = await client.chat.completions.create(
+                    model="gpt-4.1-mini",
+                    messages=messages,
+                    max_tokens=200,
+                    temperature=0.3,
+                )
+            except Exception as openai_error:
+                if "ascii" not in str(openai_error).lower():
+                    raise
+
+                print("⚠️ Media caption call hit encoding issue, retrying with ASCII-safe payload...")
+                ascii_payload = {
+                    key: ProcessTextService._ascii_safe_text(value)
+                    for key, value in payload.items()
+                }
+                ascii_messages = [
+                    {
+                        "role": "system",
+                        "content": ProcessTextService._ascii_safe_text(system_prompt),
+                    },
+                    {
+                        "role": "user",
+                        "content": json.dumps(ascii_payload, ensure_ascii=True),
+                    },
+                ]
+                response = await client.chat.completions.create(
+                    model="gpt-4.1-mini",
+                    messages=ascii_messages,
+                    max_tokens=200,
+                    temperature=0.3,
+                )
             raw = response.choices[0].message.content.strip()
             print(f"🧩 Media caption raw JSON: {raw}")
 
@@ -938,8 +1058,8 @@ Return ONLY valid JSON in this exact shape:
             if not description:
                 # Fallback: short version of long_text or original_label
                 if long_text:
-                    return long_text.strip()[:400]
-                return original_label
+                    return ProcessTextService._clean_text(long_text)[:400]
+                return ProcessTextService._clean_text(original_label)
 
             return description
 
@@ -947,8 +1067,8 @@ Return ONLY valid JSON in this exact shape:
             print(f"⚠️ Media caption error: {str(e)}")
             # Fallback on error
             if long_text:
-                return long_text.strip()[:400]
-            return original_label
+                return ProcessTextService._clean_text(long_text)[:400]
+            return ProcessTextService._clean_text(original_label)
 
     # ---------- FIRESTORE WRITE HELPERS ----------
 

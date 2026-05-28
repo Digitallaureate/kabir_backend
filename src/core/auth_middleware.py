@@ -2,7 +2,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 from fastapi import Request, HTTPException
 import logging
-from ..config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +15,8 @@ ALLOWED_PATHS = {
     "/favicon.ico",
 }
 
-# ✅ Paths that accept internal service-to-service calls via X-Internal-Key
-# (Cloud Functions cannot generate Firebase user tokens — they use a shared secret instead)
+# Paths that are fully internal and do not require auth.
+# These endpoints are intended to be called only by backend services/functions.
 INTERNAL_SERVICE_PATHS = {
     "/process-text/",
     "/process-text",
@@ -36,15 +35,11 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         ):
             return await call_next(request)
 
-        # 2. ✅ Allow internal service-to-service calls via shared secret key
+        # 2. Allow fully internal routes without user auth
         if path in INTERNAL_SERVICE_PATHS:
-            internal_key = request.headers.get("X-Internal-Key", "")
-            expected_key = settings.INTERNAL_API_KEY
-            if expected_key and internal_key == expected_key:
-                request.state.user = "cloud-function-internal"
-                logger.info(f"✅ Internal service call allowed for path: {path}")
-                return await call_next(request)
-            # If key missing/wrong, fall through to normal Firebase auth below
+            request.state.user = "internal-service"
+            logger.info(f"Internal route allowed without auth for path: {path}")
+            return await call_next(request)
 
         # 3. Verify Firebase Token for all other paths
         try:

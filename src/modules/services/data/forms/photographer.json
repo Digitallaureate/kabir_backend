@@ -64,7 +64,14 @@
                 "mode": "dynamic",
                 "sourceKey": "historical_sites",
                 "labelField": "site_name",
-                "valueField": "id"
+                "valueField": "id",
+                "filters": [
+                    {
+                        "field": "is_active",
+                        "operator": "isEqualTo",
+                        "value": true
+                    }
+                ]
             },
             "options": []
         },

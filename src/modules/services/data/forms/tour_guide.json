@@ -64,7 +64,14 @@
                 "mode": "dynamic",
                 "sourceKey": "historical_sites",
                 "labelField": "site_name",
-                "valueField": "id"
+                "valueField": "id",
+                "filters": [
+                    {
+                        "field": "is_active",
+                        "operator": "isEqualTo",
+                        "value": true
+                    }
+                ]
             },
             "options": []
         },
@@ -145,10 +152,10 @@
                 "label": "Extra Traveler",
                 "field": "number_of_travelers",
                 "operator": "greater_than",
-                "value": 2,
+                "value": 10,
                 "effect": {
                     "type": "add_per_extra_unit",
-                    "baseIncluded": 2,
+                    "baseIncluded": 10,
                     "amount": 200
                 }
             },
