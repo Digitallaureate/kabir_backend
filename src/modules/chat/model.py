@@ -1,6 +1,6 @@
 from enum import Enum
-from typing import List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Any, Dict, List, Literal, Optional
+from pydantic import BaseModel, Field
 
 
 class EnumChatType(str, Enum):
@@ -55,3 +55,30 @@ class GetOrCreateChatThreadResponse(BaseModel):
     success: bool
     data: Chat
     isExisting: bool
+
+
+class ChatCompletionProxyRequest(BaseModel):
+    """
+    Backend-owned OpenAI chat request.
+
+    `payload` is the exact JSON body that the Flutter app previously sent
+    directly to OpenAI. The backend injects the API key securely.
+    """
+
+    chatId: str = Field(..., description="Chat document ID in Firestore")
+    threadId: str = Field(..., description="Client thread identifier")
+    location: str = Field(..., description="User location for message storage")
+    mode: Literal["standard", "web_search"] = Field(
+        default="standard",
+        description="Controls Firestore metadata for the saved assistant message",
+    )
+    payload: Dict[str, Any] = Field(
+        ...,
+        description="Raw OpenAI request body previously sent from Flutter",
+    )
+
+
+class ChatCompletionProxyResponse(BaseModel):
+    openai_response: Dict[str, Any]
+    assistant_message: Optional[str] = None
+    saved_message_id: Optional[str] = None
