@@ -36,7 +36,7 @@
             "version": 1,
             "isActive": true,
             "serviceTitle": "Capture your memories",
-            "serviceDescription": "₹50 (0.52$) per Photo",
+            "serviceDescription": "₹50 (0.52$) per photo",
             "serviceImage": "https://firebasestorage.googleapis.com/v0/b/ecostory-b31b6.firebasestorage.app/o/shoppingCenter%2FPhotographerService1_optimized_100.png?alt=media&token=c5d58e68-932c-4234-a6bf-2295b924263b",
             "formTemplate": "assets/response/service/photographer_config.json",
             "ranking": 2,
@@ -63,12 +63,12 @@
             "serviceName": "Local Sightseeing",
             "serviceType": "experience_service",
             "version": 1,
-            "isActive": false,
+            "isActive": true,
             "serviceTitle": "Explore Local Attractions",
             "serviceDescription": "₹500 (5.2$) per hour",
             "serviceImage": "https://firebasestorage.googleapis.com/v0/b/ecostory-b31b6.firebasestorage.app/o/shoppingCenter%2FLocal%20souvenir%20icon.png?alt=media&token=c994ac74-19cd-4626-bfd7-cc01d5a2e73c",
             "formTemplate": "assets/response/service/sightseeing_config.json",
-            "ranking": 3,
+            "ranking": 6,
             "rating": 4.7,
             "actions": [
                 {
@@ -97,7 +97,7 @@
             "serviceDescription": "₹15 (0.16$) per km",
             "serviceImage": "https://firebasestorage.googleapis.com/v0/b/ecostory-b31b6.firebasestorage.app/o/shoppingCenter%2FCabAutoService1_optimized_100.png?alt=media&token=508b2189-bcd3-431b-8854-ecc3681e95ac",
             "formTemplate": "assets/response/service/cab_auto_config.json",
-            "ranking": 4,
+            "ranking": 3,
             "rating": 4.6,
             "actions": [
                 {
@@ -126,7 +126,7 @@
             "serviceDescription": "₹99 (1.03$) per postcard",
             "serviceImage": "https://firebasestorage.googleapis.com/v0/b/ecostory-b31b6.firebasestorage.app/o/shoppingCenter%2FPostcardService1_optimized_100.png?alt=media&token=4d8c89e4-3bb0-4b32-a79b-f3f3fafb3f25",
             "formTemplate": "assets/response/service/postcard_config.json",
-            "ranking": 5,
+            "ranking": 4,
             "rating": 4.9,
             "actions": [
                 {
@@ -155,7 +155,7 @@
             "serviceDescription": "Let us know about any special requests you have for your Agra visit",
             "serviceImage": "https://firebasestorage.googleapis.com/v0/b/ecostory-b31b6.firebasestorage.app/o/shoppingCenter%2FConciergeService1_optimized_700.png?alt=media&token=c60fbea6-f572-45eb-9e8e-5d4189648250",
             "formTemplate": "assets/response/service/other_service_config.json",
-            "ranking": 6,
+            "ranking": 5,
             "rating": 4.4,
             "actions": [
                 {

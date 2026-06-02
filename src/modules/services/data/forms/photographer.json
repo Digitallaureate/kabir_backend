@@ -58,7 +58,7 @@
             "label": "Select Monument",
             "type": "select",
             "required": true,
-            "placeholder": "Choose a monument",
+            "placeholder": "",
             "order": 5,
             "dataSource": {
                 "mode": "dynamic",
@@ -89,7 +89,7 @@
                 },
                 {
                     "key": "time_slot",
-                    "label": "Time Slot",
+                    "label": "Start Time",
                     "type": "time_slot",
                     "required": true,
                     "order": 7
@@ -98,12 +98,15 @@
         },
         {
             "key": "number_of_photos",
-            "label": "Number of Photos",
+            "label": "Number Of Photos",
             "type": "number",
             "required": true,
+            "placeholder": "Enter photos required (Min 5 · Max 50)",
+            "helperText": "Pricing is calculated based on the number of photos selected.",
             "validation": {
                 "min": 5,
-                "max": 50
+                "max": 50,
+                "message": "Please enter a number of photos between 5 and 50."
             },
             "order": 8
         },
@@ -117,57 +120,18 @@
     ],
     "pricingConfig": {
         "currency": "INR",
-        "pricingType": "package",
-        "basePrice": 0,
+        "pricingType": "dynamic",
+        "basePrice": 5,
         "rules": [
             {
-                "label": "5 Photos",
+                "label": "Extra Photos",
                 "field": "number_of_photos",
-                "operator": "equals",
+                "operator": "greater_than",
                 "value": 5,
                 "effect": {
-                    "type": "replace_price",
-                    "amount": 500
-                }
-            },
-            {
-                "label": "10 Photos",
-                "field": "number_of_photos",
-                "operator": "equals",
-                "value": 10,
-                "effect": {
-                    "type": "replace_price",
-                    "amount": 1000
-                }
-            },
-            {
-                "label": "20 Photos",
-                "field": "number_of_photos",
-                "operator": "equals",
-                "value": 20,
-                "effect": {
-                    "type": "replace_price",
-                    "amount": 1800
-                }
-            },
-            {
-                "label": "30 Photos",
-                "field": "number_of_photos",
-                "operator": "equals",
-                "value": 30,
-                "effect": {
-                    "type": "replace_price",
-                    "amount": 2500
-                }
-            },
-            {
-                "label": "50 Photos",
-                "field": "number_of_photos",
-                "operator": "equals",
-                "value": 50,
-                "effect": {
-                    "type": "replace_price",
-                    "amount": 4000
+                    "type": "add_per_extra_unit",
+                    "baseIncluded": 5,
+                    "amount": 1
                 }
             }
         ],
@@ -177,7 +141,7 @@
         },
         "convenienceFee": {
             "type": "flat",
-            "value": 20
+            "value": 1
         }
     },
     "uiConfig": {

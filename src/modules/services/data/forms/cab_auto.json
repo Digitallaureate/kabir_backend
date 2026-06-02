@@ -44,7 +44,7 @@
                     "key": "phone_number",
                     "label": "Phone Number",
                     "type": "phone",
-                    "required": true,
+                    "required": false,
                     "order": 4,
                     "validation": {
                         "pattern": "^[0-9]{10}$",
@@ -59,9 +59,9 @@
             "type": "select",
             "required": true,
             "options": [
-                "Auto",
-                "Sedan",
-                "SUV"
+                "Auto (3 Seater)",
+                "Sedan (4 Seater)",
+                "SUV (6 Seater)"
             ],
             "order": 5
         },
@@ -71,62 +71,37 @@
             "type": "select",
             "required": true,
             "options": [
-                "Single Ride",
-                "Full Day",
-                "Multiple Days"
+                "Full Day (4-5 monuments · 6-8 hours)"
             ],
             "order": 6
         },
         {
             "key": "start_date",
-            "label": "Start Date",
+            "label": "Travel Date",
             "type": "date",
             "required": true,
             "order": 7
-        },
-        {
-            "key": "end_date",
-            "label": "End Date",
-            "type": "date",
-            "required": false,
-            "visibility": {
-                "dependsOn": "booking_mode",
-                "operator": "equals",
-                "value": "Multiple Days"
-            },
-            "order": 8
         },
         {
             "key": "pickup_location",
             "label": "Pickup Location",
             "type": "text",
             "required": true,
-            "order": 9
+            "order": 8
         },
         {
             "key": "drop_location",
             "label": "Drop Location",
             "type": "text",
             "required": false,
-            "order": 10
-        },
-        {
-            "key": "number_of_travelers",
-            "label": "Number of Travelers",
-            "type": "number",
-            "required": true,
-            "validation": {
-                "min": 1,
-                "max": 20
-            },
-            "order": 11
+            "order": 9
         },
         {
             "key": "additional_requests",
             "label": "Additional Requests",
             "type": "textarea",
             "required": false,
-            "order": 12
+            "order": 10
         }
     ],
     "pricingConfig": {
@@ -138,30 +113,30 @@
                 "label": "Auto Daily Rate",
                 "field": "vehicle_type",
                 "operator": "equals",
-                "value": "Auto",
+                "value": "Auto (3 Seater)",
                 "effect": {
                     "type": "replace_price",
-                    "amount": 800
+                    "amount": 1
                 }
             },
             {
                 "label": "Sedan Daily Rate",
                 "field": "vehicle_type",
                 "operator": "equals",
-                "value": "Sedan",
+                "value": "Sedan (4 Seater)",
                 "effect": {
                     "type": "replace_price",
-                    "amount": 1500
+                    "amount": 1
                 }
             },
             {
                 "label": "SUV Daily Rate",
                 "field": "vehicle_type",
                 "operator": "equals",
-                "value": "SUV",
+                "value": "SUV (6 Seater)",
                 "effect": {
                     "type": "replace_price",
-                    "amount": 2500
+                    "amount": 1
                 }
             }
         ],
@@ -171,7 +146,7 @@
         },
         "convenienceFee": {
             "type": "flat",
-            "value": 20
+            "value": 1
         }
     },
     "uiConfig": {

@@ -13,7 +13,7 @@
     "pricingConfig": {
         "currency": "INR",
         "pricingType": "fixed",
-        "basePrice": 99,
+        "basePrice": 1,
         "rules": [],
         "tax": {
             "type": "percentage",
@@ -21,7 +21,7 @@
         },
         "convenienceFee": {
             "type": "flat",
-            "value": 5
+            "value": 1
         }
     },
     "uiConfig": {

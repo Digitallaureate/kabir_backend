@@ -58,7 +58,7 @@
             "label": "Select Monument",
             "type": "select",
             "required": true,
-            "placeholder": "Choose a monument",
+            "placeholder": "",
             "order": 5,
             "dataSource": {
                 "mode": "dynamic",
@@ -89,7 +89,7 @@
                 },
                 {
                     "key": "time_slot",
-                    "label": "Time Slot",
+                    "label": "Start Time",
                     "type": "time_slot",
                     "required": true,
                     "order": 7

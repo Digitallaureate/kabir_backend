@@ -53,7 +53,14 @@ FIREBASE_SERVICE_ACCOUNT_PATH=firebase-service-account.json
 OPENAI_API_KEY=sk-xxxx...
 PINECONE_API_KEY=pcsk_xxxx...
 ...
+
 ```
+
+for deploying new api key
+echo -n "YOUR_NEW_OPENAI_KEY" | gcloud secrets versions add OPENAI_API_KEY --data-file=-
+
+$secret = "YOUR_NEW_OPENAI_KEY"
+$secret | gcloud secrets versions add OPENAI_API_KEY --data-file=-
 
 ### 4. Running Locally
 ```powershell
