@@ -1,6 +1,6 @@
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 import os
 import logging
 from pathlib import Path
@@ -60,7 +60,7 @@ class FirebaseConfig:
 
 firebase_config = FirebaseConfig()
 
-async def verify_header_token(request) -> str:
+async def verify_header_token(request: Request) -> str:
     authorization = request.headers.get("Authorization")
 
     if not authorization:

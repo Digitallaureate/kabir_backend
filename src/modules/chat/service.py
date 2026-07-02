@@ -1,7 +1,7 @@
 from .model import (
     Chat,
-    GetOrCreateChatThreadRequest,
-    GetOrCreateChatThreadResponse,
+    GetOrCreateChatRequest,
+    GetOrCreateChatResponse,
     ChatCompletionProxyRequest,
     ChatCompletionProxyResponse,
 )
@@ -10,33 +10,77 @@ from ...database.firebase import firebase_config
 from urllib import request as urllib_request
 from urllib.error import HTTPError, URLError
 from fastapi import HTTPException, status
-from datetime import datetime
+from datetime import datetime, timedelta
 import asyncio
 import json
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
 class ChatService:
     @staticmethod
-    def getOrCreateChatThread(params: GetOrCreateChatThreadRequest) -> GetOrCreateChatThreadResponse:
-        try:
-            # Simulate fetching or creating a chat thread
-            # In a real implementation, this would interact with Firebase Firestore
-            is_existing = False  # Assume it's a new thread for this example
-            chat = Chat(
-                id="generated_chat_id",
-                created_at="2024-01-01T00:00:00Z",
-                updated_at="2024-01-01T00:00:00Z",
-                location=params.location,
-                chat_type=params.chat_type,
-                chat_name=params.chat_name,
-                participants=[]
+    async def get_or_create_chat(
+        params: GetOrCreateChatRequest, user_id: str
+    ) -> GetOrCreateChatResponse:
+        """
+        Return the user's existing chat or create a new one.
+
+        A chat matches when it has the same chat_type, chat_name and location,
+        the user is in `participants`, and it was updated within the last 6
+        months. If no such chat exists, a new one is created with the user as a
+        participant.
+        """
+
+        def sync_get_or_create() -> GetOrCreateChatResponse:
+            db = firebase_config.db
+
+            # --- 1. Timestamps -------------------------------------------------
+            now = datetime.utcnow().isoformat() + "Z"
+            six_months_ago = (
+                datetime.utcnow() - timedelta(days=182)
+            ).isoformat() + "Z"
+
+            # --- 2. Look for an existing, recent chat for this user ------------
+            query = (
+                db.collection("chats")
+                .where("chat_type", "==", params.chat_type.value)
+                .where("chat_name", "==", params.chat_name)
+                .where("location", "==", params.location)
+                .where("participants", "array_contains", user_id)
+                .where("updated_at", ">=", six_months_ago)
+                .limit(1)
             )
-            return GetOrCreateChatThreadResponse(success=True, data=chat, isExisting=is_existing)
-        except Exception as e:
-            logger.error(f"Error in getOrCreateChatThread: {e}")
-            return GetOrCreateChatThreadResponse(success=False, data=None, isExisting=False)
+
+            existing = next(iter(query.stream()), None)
+            if existing is not None:
+                data = existing.to_dict() or {}
+                data.setdefault("id", existing.id)
+                data.setdefault("isHumanInteraction", False)
+                return GetOrCreateChatResponse(
+                    data=Chat(**data), isExisting=True
+                )
+
+            # --- 3. None found -> create a new chat ---------------------------
+            # Use a UUID id to match existing chats (created by the old backend).
+            chat_id = str(uuid.uuid4())
+            chat_data = {
+                "id": chat_id,
+                "created_at": now,
+                "updated_at": now,
+                "location": params.location,
+                "chat_type": params.chat_type.value,
+                "chat_name": params.chat_name,
+                "participants": [user_id],
+                "isHumanInteraction": False,
+            }
+            db.collection("chats").document(chat_id).set(chat_data)
+
+            return GetOrCreateChatResponse(
+                data=Chat(**chat_data), isExisting=False
+            )
+
+        return await asyncio.to_thread(sync_get_or_create)
 
     @staticmethod
     def _extract_assistant_message(parsed_json: dict) -> str | None:

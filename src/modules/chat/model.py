@@ -19,7 +19,7 @@ class ChatMessageRole(str, Enum):
 
 
 # -------- Request schema (permissive for migration) --------
-class GetOrCreateChatThreadRequest(BaseModel):
+class GetOrCreateChatRequest(BaseModel):
     """
     Permissive request model so you can reuse the same frontend payload.
     Only these are required: chat_name, chat_type, location, latitude, longitude.
@@ -28,18 +28,11 @@ class GetOrCreateChatThreadRequest(BaseModel):
     chat_name: str
     chat_type: EnumChatType
     location: str
-    latitude: str
-    longitude: str
-
-    # Optional / tolerated inputs (present in your current logs)
-    chat_id: Optional[str] = None
-    assistant_id: Optional[str] = None
-    thread_id: Optional[str] = None
-    content: Optional[str] = None
-    image_url: Optional[str] = None
+    latitude: float
+    longitude: float
 
 
-# -------- Chat document (matches your Firestore/Node response) --------
+
 class Chat(BaseModel):
     id: str
     created_at: str
@@ -48,11 +41,11 @@ class Chat(BaseModel):
     chat_type: EnumChatType
     chat_name: str
     participants: List[str] = Field(default_factory=list)
+    isHumanInteraction: bool
 
 
-# -------- Response wrapper (mirrors Node) --------
-class GetOrCreateChatThreadResponse(BaseModel):
-    success: bool
+
+class GetOrCreateChatResponse(BaseModel):
     data: Chat
     isExisting: bool
 
