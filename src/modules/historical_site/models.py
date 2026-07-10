@@ -26,7 +26,6 @@ class NearbySitesQuery(BaseModel):
     radius: float = Field(10.0, description="Search radius in km")
     limit: int = Field(2, description="Max results")
     category: Optional[str] = None
-    # difficulty_level is in your interface; include if you’ll filter later
     difficulty_level: Optional[str] = None
 
 class HistoricalSitesResponse(BaseModel):

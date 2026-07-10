@@ -1,6 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Request, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import os
 import logging
 from pathlib import Path
@@ -8,6 +9,10 @@ from ..config.settings import settings
 import jwt
 
 logger = logging.getLogger(__name__)
+firebase_bearer = HTTPBearer(
+    auto_error=False,
+    description="Paste a Firebase ID token as: Bearer <token>",
+)
 
 class FirebaseConfig:
     def __init__(self):
@@ -60,9 +65,13 @@ class FirebaseConfig:
 
 firebase_config = FirebaseConfig()
 
-async def verify_header_token(request: Request) -> str:
+async def verify_header_token(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Security(firebase_bearer),
+) -> str:
     authorization = request.headers.get("Authorization")
-
+    if isinstance(credentials, HTTPAuthorizationCredentials) and credentials.credentials:
+        authorization = f"Bearer {credentials.credentials}"
     if not authorization:
         if settings.DEBUG_SKIP_VERIFY:
             return "local-debug-user"
