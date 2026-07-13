@@ -2,6 +2,8 @@ from fastapi import APIRouter, Request, Depends, HTTPException, status
 from .model import (
     ChatCompletionProxyRequest,
     ChatCompletionProxyResponse,
+    ChatMessageRequest,
+    ChatMessageResponse,
     GetOrCreateChatRequest,
     GetOrCreateChatResponse,
 )
@@ -17,9 +19,6 @@ router = APIRouter(
     prefix="/chat",
     tags=["Chat"],
 )
-
-
-
 
 
 @router.post(
@@ -73,3 +72,39 @@ async def create_chat_completion(request: Request, body: ChatCompletionProxyRequ
 
     result = await ChatService.create_chat_completion(body)
     return success_response(request=request, data=result)
+
+
+@router.post(
+    "/send-image-message",
+    response_model=GenericResponse[ChatMessageResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def send_chat_image_message(
+    request: Request,
+    body: ChatMessageRequest,
+    uid: str = Depends(verify_header_token),
+):
+    """
+    Save a user's image message, run it through OpenAI vision, store the
+    assistant's review, and return the assistant reply.
+    """
+    try:
+        result = await ChatService.send_chat_image_message(body, user_id=uid)
+
+        # Persist the user's latest location (best-effort, won't break the response).
+        await store_user_location(
+            user_id=uid,
+            latitude=body.latitude,
+            longitude=body.longitude,
+            location=body.location,
+        )
+
+        return success_response(request=request, data=result)
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as e:
+        logger.error(f"Endpoint Error (send_chat_image_message): {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send image message: {str(e)}",
+        )

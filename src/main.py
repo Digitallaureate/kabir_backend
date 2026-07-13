@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config.settings import settings
+from .core.logging import configure_logging
 import logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging via the shared helper, driven by settings.LOG_LEVEL.
+configure_logging(settings.LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 def create_app() -> FastAPI:

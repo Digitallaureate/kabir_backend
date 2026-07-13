@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     DEBUG: bool = False
     PORT: int = 8000
+    LOG_LEVEL: str = "INFO"  # INFO | DEBUG | WARN | ERROR — set DEBUG to see payloads
     
     # Cache Settings
     CACHE_TTL_SECONDS: int = 300
@@ -22,6 +23,7 @@ class Settings(BaseSettings):
     
     # OpenAI Settings
     OPENAI_API_KEY: Optional[str] = None
+    OPENAI_MODEL: str = "gpt-4o"  # vision-capable
     
     # Pinecone Settings
     PINECONE_API_KEY: Optional[str] = None

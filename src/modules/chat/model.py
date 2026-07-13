@@ -6,8 +6,6 @@ from pydantic import BaseModel, Field
 class EnumChatType(str, Enum):
     GLOBAL = "global"
     JOURNEY = "journey"
-    TIPS = "tips"
-    TRIVIA = "trivia"
 
 class EnumChatMessageType(str, Enum):
     TEXT = "text"
@@ -20,11 +18,6 @@ class ChatMessageRole(str, Enum):
 
 # -------- Request schema (permissive for migration) --------
 class GetOrCreateChatRequest(BaseModel):
-    """
-    Permissive request model so you can reuse the same frontend payload.
-    Only these are required: chat_name, chat_type, location, latitude, longitude.
-    Others are accepted but ignored by this endpoint.
-    """
     chat_name: str
     chat_type: EnumChatType
     location: str
@@ -51,13 +44,6 @@ class GetOrCreateChatResponse(BaseModel):
 
 
 class ChatCompletionProxyRequest(BaseModel):
-    """
-    Backend-owned OpenAI chat request.
-
-    `payload` is the exact JSON body that the Flutter app previously sent
-    directly to OpenAI. The backend injects the API key securely.
-    """
-
     chatId: str = Field(..., description="Chat document ID in Firestore")
     threadId: str = Field(..., description="Client thread identifier")
     location: str = Field(..., description="User location for message storage")
@@ -75,3 +61,21 @@ class ChatCompletionProxyResponse(BaseModel):
     openai_response: Dict[str, Any]
     assistant_message: Optional[str] = None
     saved_message_id: Optional[str] = None
+
+class ChatMessageRequest(BaseModel):
+    chatId: str
+    content: str
+    location: str
+    latitude: float
+    longitude: float
+    image_url: Optional[str] = None
+    message_type: EnumChatMessageType = EnumChatMessageType.TEXT
+
+class ChatMessageResponse(BaseModel):
+    user_message_id: str
+    assistant_message: Optional[str] = None
+    assistant_message_id: Optional[str] = None
+
+
+
+    
