@@ -43,7 +43,7 @@ async def get_or_create_chat(
             user_id=uid,
             latitude=body.latitude,
             longitude=body.longitude,
-            location=body.location,
+            location=body.currentLocation,
         )
 
         return success_response(request=request, data=result)
@@ -96,7 +96,7 @@ async def send_chat_image_message(
             user_id=uid,
             latitude=body.latitude,
             longitude=body.longitude,
-            location=body.location,
+            location=body.currentLocation,
         )
 
         return success_response(request=request, data=result)

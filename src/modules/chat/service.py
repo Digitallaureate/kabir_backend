@@ -406,7 +406,7 @@ class ChatService:
                 {
                     "role": "system",
                     "content": (
-                        f"The user is currently located at {params.location}, "
+                        f"The user is currently located at {params.currentLocation}, "
                         f"closest monuments are {nearby_sites}."
                     ),
                 },

@@ -21,6 +21,7 @@ class GetOrCreateChatRequest(BaseModel):
     chat_name: str
     chat_type: EnumChatType
     location: str
+    currentLocation: str
     latitude: float
     longitude: float
 
@@ -66,6 +67,7 @@ class ChatMessageRequest(BaseModel):
     chatId: str
     content: str
     location: str
+    currentLocation: str
     latitude: float
     longitude: float
     image_url: Optional[str] = None
