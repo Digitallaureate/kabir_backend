@@ -22,6 +22,14 @@ INTERNAL_SERVICE_PATHS = {
     "/process-text",
 }
 
+# Same idea as INTERNAL_SERVICE_PATHS, but for route trees with dynamic
+# segments (e.g. /api/blog/requests/{request_id}). These are authenticated by
+# INTERNAL_API_KEY on the route itself (see core/security.py), not by a
+# Firebase user token.
+INTERNAL_SERVICE_PREFIXES = (
+    "/api/blog/",
+)
+
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
@@ -36,7 +44,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # 2. Allow fully internal routes without user auth
-        if path in INTERNAL_SERVICE_PATHS:
+        if path in INTERNAL_SERVICE_PATHS or path.startswith(INTERNAL_SERVICE_PREFIXES):
             request.state.user = "internal-service"
             logger.info(f"Internal route allowed without auth for path: {path}")
             return await call_next(request)
